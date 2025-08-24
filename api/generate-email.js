@@ -26,7 +26,7 @@ export default async function handler(req, res) {
         },
         {
           role: "user",
-          content: `Here are the notes:\n${notes}\n\nPlease generate a professional email to the client.`,
+          content: `Here are the notes:\n${notes}\n\nPlease generate a professional email to the client. Do not include Client's Name and don't add a subject. Do not include Next Steps on the email. Also the the Position will always be Modification Specialist \n Pro Modifications Team`,
         },
       ],
     });
