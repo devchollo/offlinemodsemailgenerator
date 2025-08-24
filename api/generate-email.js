@@ -41,7 +41,7 @@ export default async function handler(req, res) {
         },
         {
           role: "user",
-          content: `Here are the notes:\n${notes}\n\nGenerate a professional email to the client. Include a brief introduction, but strictly follow the ${template}. Do NOT include the email salutation, closing, or signature.`,
+          content: `Here are the notes:\n${notes}\n\nGenerate a professional email to the client. Include a brief introduction, but strictly follow the ${template}. Do NOT include Next Steps:. Do NOT include the email salutation, closing, or signature.`,
         },
       ],
     });
