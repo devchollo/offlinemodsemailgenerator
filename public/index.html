@@ -46,10 +46,20 @@
         border-radius: 6px;
         background: #0f1115;
         color: #fff;
+        overflow: hidden;
+        transition: height 0.2s ease; /* smooth expansion */
+      }
+      input {
+        max-height: 150px;
       }
       textarea {
-        resize: vertical;
+        resize: none; /* disable manual resize */
         min-height: 60px;
+        max-height: 300px;
+      }
+      input.scrollable,
+      textarea.scrollable {
+        overflow-y: auto;
       }
       button {
         background: linear-gradient(135deg, #4f8cff, #7c4dff);
@@ -181,16 +191,41 @@
       const confirmClear = document.getElementById("confirmClear");
       const cancelClear = document.getElementById("cancelClear");
 
+      // Auto-resize function with smooth animation
+      function autoResizeField(field, maxHeight) {
+        field.style.height = "auto";
+        const scrollHeight = field.scrollHeight;
+        if (scrollHeight > maxHeight) {
+          field.style.height = maxHeight + "px";
+          field.classList.add("scrollable");
+        } else {
+          field.style.height = scrollHeight + "px";
+          field.classList.remove("scrollable");
+        }
+      }
+
+      function attachAutoResize(form) {
+        const fields = form.querySelectorAll("input, textarea");
+        fields.forEach((field) => {
+          const maxH = field.tagName === "INPUT" ? 250 : 400;
+          field.addEventListener("input", () => autoResizeField(field, maxH));
+          autoResizeField(field, maxH); // initial sizing
+        });
+      }
+
+      attachAutoResize(form);
+
       addFieldBtn.addEventListener("click", () => {
         const block = document.createElement("div");
         block.className = "change-block";
         block.innerHTML = `
-        <label>URL / Page Edited</label>
-        <input type="text" placeholder="https://example.com/page" />
-        <label>What changes were made?</label>
-        <textarea placeholder="Describe the changes..."></textarea>
-      `;
+          <label>URL / Page Edited</label>
+          <input type="text" placeholder="https://example.com/page" />
+          <label>What changes were made?</label>
+          <textarea placeholder="Describe the changes..."></textarea>
+        `;
         form.appendChild(block);
+        attachAutoResize(form); // attach to new fields
       });
 
       generateBtn.addEventListener("click", async () => {
@@ -205,7 +240,6 @@
           }
         });
 
-        // Use the template
         const formattedNote = `-- FULFILLMENT MOD COMPLETED --\n\nCOMPLETED:\n\n${notesContent}NEXT STEPS:\n\nAdvised the client to submit additional changes through site changes form or call in for further support.\nRequest closed and being reviewed by quality control.`;
 
         noteOutput.textContent = formattedNote || "Nothing yet...";
@@ -242,16 +276,17 @@
 
       confirmClear.addEventListener("click", () => {
         form.innerHTML = `
-        <div class="change-block">
-          <label>URL / Page Edited</label>
-          <input type="text" placeholder="https://example.com/page" />
-          <label>What changes were made?</label>
-          <textarea placeholder="Describe the changes..."></textarea>
-        </div>
-      `;
+          <div class="change-block">
+            <label>URL / Page Edited</label>
+            <input type="text" placeholder="https://example.com/page" />
+            <label>What changes were made?</label>
+            <textarea placeholder="Describe the changes..."></textarea>
+          </div>
+        `;
         noteOutput.textContent = "Nothing yet...";
         emailOutput.textContent = "Nothing yet...";
         modal.style.display = "none";
+        attachAutoResize(form);
       });
 
       cancelClear.addEventListener("click", () => {
