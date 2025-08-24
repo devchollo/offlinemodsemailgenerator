@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Note & Email Generator</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #0f1115;
+        color: #e4e6eb;
+        margin: 0;
+        display: flex;
+        height: 100vh;
+      }
+      .container {
+        display: flex;
+        flex: 1;
+        gap: 20px;
+        padding: 20px;
+      }
+      .panel {
+        flex: 1;
+        background: #1c1f26;
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      }
+      h2 {
+        margin-top: 0;
+      }
+      .change-block {
+        margin-bottom: 15px;
+        padding: 10px;
+        border: 1px solid #333;
+        border-radius: 8px;
+        background: #2a2e38;
+      }
+      input,
+      textarea {
+        width: 95%;
+        padding: 8px;
+        margin-top: 5px;
+        margin-bottom: 10px;
+        border: none;
+        border-radius: 6px;
+        background: #0f1115;
+        color: #fff;
+      }
+      textarea {
+        resize: vertical;
+        min-height: 60px;
+      }
+      button {
+        background: linear-gradient(135deg, #4f8cff, #7c4dff);
+        border: none;
+        padding: 10px 15px;
+        color: #fff;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      button:hover {
+        opacity: 0.9;
+      }
+      pre {
+        background: #0f1115;
+        border-radius: 8px;
+        padding: 10px;
+        white-space: pre-wrap;
+        flex: 1;
+        overflow-y: auto;
+      }
+      .output-controls {
+        margin-top: 10px;
+        display: flex;
+        gap: 10px;
+      }
+      /* Modal */
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-content {
+        background: #1c1f26;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 300px;
+        text-align: center;
+      }
+      .modal-content button {
+        margin-top: 10px;
+      }
+      /* Loading Spinner */
+      .spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #7c4dff;
+        animation: spin 1s ease-in-out infinite;
+        vertical-align: middle;
+        margin-right: 8px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .loading {
+        display: flex;
+        align-items: center;
+        color: #aaa;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- LEFT: Note Generator -->
+      <div class="panel">
+        <h2>Note Generator</h2>
+        <form id="noteForm">
+          <div class="change-block">
+            <label>URL / Page Edited</label>
+            <input type="text" placeholder="https://example.com/page" /><br />
+            <label>What changes were made?</label>
+            <textarea placeholder="Describe the changes..."></textarea>
+          </div>
+        </form>
+        <div>
+          <button type="button" id="addFieldBtn">+ Add Another Change</button>
+          <button type="button" id="generateBtn">Generate</button>
+        </div>
+        <h3>Generated Note</h3>
+        <pre id="noteOutput">Nothing yet...</pre>
+        <div class="output-controls">
+          <button type="button" id="copyNoteBtn">Copy Note</button>
+          <button type="button" id="clearAllBtn">Clear All</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: Email Preview -->
+      <div class="panel">
+        <h2>Email Preview</h2>
+        <pre id="emailOutput">Nothing yet...</pre>
+        <div class="output-controls">
+          <button type="button" id="copyEmailBtn">Copy Email</button>
+          <button type="button" id="clearEmailBtn">Clear Email</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="confirmModal" class="modal">
+      <div class="modal-content">
+        <p>Are you sure you want to clear everything?</p>
+        <button id="confirmClear">Yes, Clear</button>
+        <button id="cancelClear">Cancel</button>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById("noteForm");
+      const addFieldBtn = document.getElementById("addFieldBtn");
+      const generateBtn = document.getElementById("generateBtn");
+      const noteOutput = document.getElementById("noteOutput");
+      const emailOutput = document.getElementById("emailOutput");
+
+      const copyNoteBtn = document.getElementById("copyNoteBtn");
+      const copyEmailBtn = document.getElementById("copyEmailBtn");
+      const clearAllBtn = document.getElementById("clearAllBtn");
+      const clearEmailBtn = document.getElementById("clearEmailBtn");
+
+      const modal = document.getElementById("confirmModal");
+      const confirmClear = document.getElementById("confirmClear");
+      const cancelClear = document.getElementById("cancelClear");
+
+      addFieldBtn.addEventListener("click", () => {
+        const block = document.createElement("div");
+        block.className = "change-block";
+        block.innerHTML = `
+        <label>URL / Page Edited</label>
+        <input type="text" placeholder="https://example.com/page" />
+        <label>What changes were made?</label>
+        <textarea placeholder="Describe the changes..."></textarea>
+      `;
+        form.appendChild(block);
+      });
+
+      generateBtn.addEventListener("click", async () => {
+        const blocks = form.querySelectorAll(".change-block");
+        let notesContent = "";
+
+        blocks.forEach((block) => {
+          const url = block.querySelector("input").value.trim();
+          const desc = block.querySelector("textarea").value.trim();
+          if (url && desc) {
+            notesContent += `Page/URL: ${url}\n\n${desc}\n\n`;
+          }
+        });
+
+        // Use the template
+        const formattedNote = `-- FULFILLMENT MOD COMPLETED --\n\nCOMPLETED:\n\n${notesContent}NEXT STEPS:\n\nAdvised the client to submit additional changes through site changes form or call in for further support.\nRequest closed and being reviewed by quality control.`;
+
+        noteOutput.textContent = formattedNote || "Nothing yet...";
+
+        if (notesContent) {
+          emailOutput.innerHTML =
+            '<div class="loading"><div class="spinner"></div>Generating email...</div>';
+          try {
+            const res = await fetch("/api/generate-email", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ notes: formattedNote }),
+            });
+            const data = await res.json();
+            emailOutput.textContent = data.email || "Error generating email.";
+          } catch (err) {
+            emailOutput.textContent = "Error contacting server.";
+            console.error(err);
+          }
+        }
+      });
+
+      copyNoteBtn.addEventListener("click", () => {
+        navigator.clipboard.writeText(noteOutput.textContent);
+      });
+
+      copyEmailBtn.addEventListener("click", () => {
+        navigator.clipboard.writeText(emailOutput.textContent);
+      });
+
+      clearAllBtn.addEventListener("click", () => {
+        modal.style.display = "flex";
+      });
+
+      confirmClear.addEventListener("click", () => {
+        form.innerHTML = `
+        <div class="change-block">
+          <label>URL / Page Edited</label>
+          <input type="text" placeholder="https://example.com/page" />
+          <label>What changes were made?</label>
+          <textarea placeholder="Describe the changes..."></textarea>
+        </div>
+      `;
+        noteOutput.textContent = "Nothing yet...";
+        emailOutput.textContent = "Nothing yet...";
+        modal.style.display = "none";
+      });
+
+      cancelClear.addEventListener("click", () => {
+        modal.style.display = "none";
+      });
+
+      clearEmailBtn.addEventListener("click", () => {
+        emailOutput.textContent = "Nothing yet...";
+      });
+    </script>
+  </body>
+</html>
