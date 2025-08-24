@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { notes } = req.body; // Vercel automatically parses JSON
+    const { notes } = req.body;
 
     if (!notes) {
       return res.status(400).json({ error: "No notes provided" });
@@ -33,14 +33,15 @@ export default async function handler(req, res) {
     // Call OpenAI if not cached
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
+      temperature: 0.6, // <-- added temperature
       messages: [
         {
           role: "system",
-          content: `You are a helpful assistant that generates professional client-facing emails based strictly on the given notes. You are to strictly follow the ${template}`,
+          content: `You are a helpful assistant that generates professional, client-facing emails strictly based on the provided notes. Follow the ${template} exactly. Do NOT add a salutation, closing, or signature.`,
         },
         {
           role: "user",
-          content: `Here are the notes:\n${notes}\n\nPlease generate a professional email to the client. Do not include Client's Name nor "Dear Client" and don't add a subject. Do not include Next Steps on the email. Also the Position will always be Modification Specialist \n Pro Modifications Team`,
+          content: `Here are the notes:\n${notes}\n\nGenerate a professional email to the client. Include a brief introduction, but strictly follow the ${template}. Do NOT include the email salutation, closing, or signature.`,
         },
       ],
     });
