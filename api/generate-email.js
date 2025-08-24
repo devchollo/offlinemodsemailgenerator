@@ -9,6 +9,10 @@ const client = new OpenAI({
 const cache = new Map();
 
 export default async function handler(req, res) {
+  const template = `
+  # {PAGE / URL} 
+  > {Changes made}
+  `;
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -32,11 +36,11 @@ export default async function handler(req, res) {
       messages: [
         {
           role: "system",
-          content: `You are a helpful assistant that generates professional, client-facing emails strictly based on the provided notes. Include a brief introduction. Do NOT add a salutation, closing, or signature.`,
+          content: `You are a helpful assistant that generates professional, client-facing emails strictly based on the provided notes. Include a brief introduction but strictly follow the ${template}. Do NOT add a salutation, closing, or signature.`,
         },
         {
           role: "user",
-          content: `Here are the notes:\n${notes}\n\nGenerate a professional email to the client. Include a brief introduction. Do NOT include Next Steps:. Do NOT include the email salutation, closing, or signature.`,
+          content: `Here are the notes:\n${notes}\n\nGenerate a professional email to the client. Include a brief introduction but strictly follow the ${template}. Do NOT include Next Steps:. Do NOT include the email salutation, closing, or signature.`,
         },
       ],
     });
