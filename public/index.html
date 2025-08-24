@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Note & Email Generator</title>
     <style>
       body {
@@ -10,15 +11,19 @@
         color: #e4e6eb;
         margin: 0;
         display: flex;
+        flex-direction: column;
+        min-height: 100vh;
       }
       .container {
         display: flex;
-        flex: 1;
+        flex-wrap: wrap;
         gap: 20px;
         padding: 20px;
       }
       .panel {
-        flex: 1;
+        flex: 1 1 400px;
+        min-width: 300px;
+        max-width: 100%;
         background: #1c1f26;
         border-radius: 12px;
         padding: 20px;
@@ -38,7 +43,7 @@
       }
       input,
       textarea {
-        width: 95%;
+        width: 100%;
         padding: 8px;
         margin-top: 5px;
         margin-bottom: 10px;
@@ -47,15 +52,16 @@
         background: #0f1115;
         color: #fff;
         overflow: hidden;
-        transition: height 0.2s ease; /* smooth expansion */
+        transition: height 0.2s ease;
+        box-sizing: border-box;
       }
       input {
         max-height: 150px;
       }
       textarea {
-        resize: none; /* disable manual resize */
+        resize: none;
         min-height: 60px;
-        max-height: 300px;
+        max-height: 40vh;
       }
       input.scrollable,
       textarea.scrollable {
@@ -69,6 +75,7 @@
         border-radius: 8px;
         cursor: pointer;
         margin-right: 10px;
+        margin-top: 5px;
       }
       button:hover {
         opacity: 0.9;
@@ -84,6 +91,7 @@
       .output-controls {
         margin-top: 10px;
         display: flex;
+        flex-wrap: wrap;
         gap: 10px;
       }
       /* Modal */
@@ -94,6 +102,7 @@
         display: none;
         align-items: center;
         justify-content: center;
+        z-index: 1000;
       }
       .modal-content {
         background: #1c1f26;
@@ -127,6 +136,22 @@
         align-items: center;
         color: #aaa;
         font-style: italic;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 900px) {
+        .container {
+          flex-direction: column;
+          padding: 15px;
+        }
+        .panel {
+          flex: 1 1 100%;
+          max-width: 100%;
+        }
+        button {
+          width: 100%;
+          margin-right: 0;
+        }
       }
     </style>
   </head>
@@ -191,12 +216,12 @@
       const confirmClear = document.getElementById("confirmClear");
       const cancelClear = document.getElementById("cancelClear");
 
-      // Auto-resize function with smooth animation
-      function autoResizeField(field, maxHeight) {
+      function autoResizeField(field) {
         field.style.height = "auto";
+        const maxH = window.innerHeight * 0.25; // max 25% of viewport height
         const scrollHeight = field.scrollHeight;
-        if (scrollHeight > maxHeight) {
-          field.style.height = maxHeight + "px";
+        if (scrollHeight > maxH) {
+          field.style.height = maxH + "px";
           field.classList.add("scrollable");
         } else {
           field.style.height = scrollHeight + "px";
@@ -207,9 +232,8 @@
       function attachAutoResize(form) {
         const fields = form.querySelectorAll("input, textarea");
         fields.forEach((field) => {
-          const maxH = field.tagName === "INPUT" ? 250 : 400;
-          field.addEventListener("input", () => autoResizeField(field, maxH));
-          autoResizeField(field, maxH); // initial sizing
+          field.addEventListener("input", () => autoResizeField(field));
+          autoResizeField(field);
         });
       }
 
@@ -225,7 +249,7 @@
           <textarea placeholder="Describe the changes..."></textarea>
         `;
         form.appendChild(block);
-        attachAutoResize(form); // attach to new fields
+        attachAutoResize(form);
       });
 
       generateBtn.addEventListener("click", async () => {
