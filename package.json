@@ -16,5 +16,8 @@
     "url": "https://github.com/devchollo/offlinemodsemailgenerator/issues"
   },
   "homepage": "https://github.com/devchollo/offlinemodsemailgenerator#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "openai": "^5.15.0"
+  }
 }
