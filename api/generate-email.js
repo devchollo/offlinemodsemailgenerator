@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 
-// Initialize OpenAI client
-const client = new OpenAI({
+// OpenAI client
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
@@ -9,58 +9,56 @@ const client = new OpenAI({
 const cache = new Map();
 
 export default async function handler(req, res) {
-  const closing = `
-  As part of our standard process, we typically give you a quick call to confirm the updates. However, due to the high volume of requests and our extended weekend hours, we would like to respect your personal time and avoid disturbing you outside regular business days.
- 
-\nYou can now review the updates at your convenience. Should you have any additional changes, feedback, or clarifications, please don’t hesitate to reach out to us during our regular working hours, and we’ll be happy to assist you.
- 
-\nYou can call us at 1-888-642-0197 for any clarifications we'd be glad to assist you with your needs. Thank you for your understanding and continued trust in our services.
-  \n`;
-  const template = `
-  ${req.body}\n\n
-
-  ${closing}
-  `;
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
     const { notes } = req.body;
-
     if (!notes) {
       return res.status(400).json({ error: "No notes provided" });
     }
 
-    // Check cache first
+    // ✅ Cache check
     if (cache.has(notes)) {
       return res.status(200).json({ email: cache.get(notes), cached: true });
     }
 
-    // Call OpenAI if not cached
-    const completion = await client.chat.completions.create({
+    const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      temperature: 0.6, 
+      temperature: 0.5,
       messages: [
         {
           role: "system",
-          content: `You are a helpful assistant that generates professional, client-facing emails strictly based on the provided notes. Include a brief introduction but strictly follow the ${template}. Do NOT add a salutation, closing, or signature.`,
+          content:
+            "You are a helpful assistant writing professional client-facing emails. " +
+            "Generate a short introductory sentence or two that summarizes the changes in the internal notes. " +
+            "Then list the updates strictly in this format:\n\n" +
+            "# Page Name/URL\n - What was changed\n\n" +
+            "Do NOT include greetings, closings, signatures, internal notes, or NEXT STEPS/QC notes. " +
+            "Keep the email concise and professional.",
         },
         {
           role: "user",
-          content: `Here are the notes:\n${notes}\n\nGenerate a professional email to the client. Include a brief introduction but strictly follow the ${template}. Do NOT include Next Steps:. Do NOT include the email salutation, closing, or signature.`,
+          content: `Internal notes:\n${notes}\n\nWrite the client-facing email now.`,
         },
       ],
     });
 
-    const email = completion.choices[0].message.content;
+    let email = response.choices[0]?.message?.content?.trim() || "No email generated.";
+
+    // 🔧 Optional cleanup: normalize line breaks & enforce # / - prefixes
+    email = email
+      .replace(/\r\n/g, "\n")
+      .replace(/^\s*Page\/URL:/gm, "# ") // ensure headers
+      .replace(/^\s*[-•]\s*/gm, " - "); // normalize dash lists
 
     // Save to cache
     cache.set(notes, email);
 
-    res.status(200).json({ email, cached: false });
+    return res.status(200).json({ email, cached: false });
   } catch (err) {
-    console.error("OpenAI Error:", err);
-    res.status(500).json({ error: "Failed to generate email" });
+    console.error("OpenAI Error:", err.response?.data || err.stack || err);
+    return res.status(500).json({ error: "Failed to generate email" });
   }
 }
