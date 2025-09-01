@@ -38,7 +38,7 @@ Here are the updates we’ve completed for your website:`;
             "You are a helpful assistant writing professional client-facing emails. " +
             "Generate a short introductory sentence or two that summarizes the changes in the internal notes. " +
             "Then list the updates strictly in this format:\n\n" +
-            `${intro}` +
+            `${intro}\n` +
             "# Page Name/URL\n - What was changed\n\n" +
             `${closure}` +
             "Do NOT include greetings, closings, signatures, internal notes, or NEXT STEPS/QC notes. " +
