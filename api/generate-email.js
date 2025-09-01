@@ -42,7 +42,7 @@ Here are the updates we’ve completed for your website:`;
             "# Page Name/URL\n - What was changed\n\n" +
             `${closure}` +
             "Do NOT include greetings, closings, signatures, internal notes, or NEXT STEPS/QC notes. " +
-            "Keep the email concise and professional.",
+            "Always include the URL if its given. Keep the email concise and professional.",
         },
         {
           role: "user",
