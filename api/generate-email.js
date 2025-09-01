@@ -9,6 +9,10 @@ const openai = new OpenAI({
 const cache = new Map();
 
 export default async function handler(req, res) {
+  const intro = `Happy Labor Day! 🎉 We hope you’re enjoying a relaxing holiday.\n
+Here are the updates we’ve completed for your website:`;
+  const closure = `Normally, we would reach out by phone to confirm these updates with you. However, since it’s Labor Day, we didn’t want to disturb your holiday. Please feel free to review the changes at your convenience, and we’ll be glad to confirm everything with you after the holiday.
+\nThank you for your continued trust, and wishing you a safe and enjoyable Labor Day!`;
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -34,7 +38,9 @@ export default async function handler(req, res) {
             "You are a helpful assistant writing professional client-facing emails. " +
             "Generate a short introductory sentence or two that summarizes the changes in the internal notes. " +
             "Then list the updates strictly in this format:\n\n" +
+            `${intro}` +
             "# Page Name/URL\n - What was changed\n\n" +
+            `${closure}` +
             "Do NOT include greetings, closings, signatures, internal notes, or NEXT STEPS/QC notes. " +
             "Keep the email concise and professional.",
         },
