@@ -9,10 +9,6 @@ const openai = new OpenAI({
 const cache = new Map();
 
 export default async function handler(req, res) {
-  const intro = `Happy Labor Day! 🎉 We hope you’re enjoying a relaxing holiday.\n
-Here are the updates we’ve completed for your website:`;
-  const closure = `Normally, we would reach out by phone to confirm these updates with you. However, since it’s Labor Day, we didn’t want to disturb your holiday. Please feel free to review the changes at your convenience, and we’ll be glad to confirm everything with you after the holiday.
-\nThank you for your continued trust, and wishing you a safe and enjoyable Labor Day!`;
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -36,13 +32,17 @@ Here are the updates we’ve completed for your website:`;
           role: "system",
           content:
             "You are a helpful assistant writing professional client-facing emails. " +
-            "Generate a short introductory sentence or two that summarizes the changes in the internal notes. " +
-            "Then list the updates strictly in this format:\n\n" +
-            `${intro}\n` +
-            "# Page Name/URL\n - What was changed\n\n" +
-            `${closure}` +
-            "Do NOT include greetings, closings, signatures, internal notes, or NEXT STEPS/QC notes. " +
-            "Always include the URL if its given. Keep the email concise and professional.",
+            "Strictly follow this structure when generating the email:\n\n" +
+            "[insert a bit of intro here and summary of what changed]\n\n" +
+            "Page/URL: [Page title / URL here]\n\n" +
+            "[changes here]\n\n\n" +
+            "[Advise the client to submit additional changes through site changes form or call in for further support.]\n" +
+            "Request closed and being reviewed by quality control.\n\n" +
+            "Rules:\n" +
+            "- Replace the square brackets with real content.\n" +
+            "- Do NOT include greetings, closings, signatures, internal notes, or NEXT STEPS/QC notes.\n" +
+            "- Always include the URL if it’s given.\n" +
+            "- Keep the email concise and professional.",
         },
         {
           role: "user",
@@ -53,11 +53,11 @@ Here are the updates we’ve completed for your website:`;
 
     let email = response.choices[0]?.message?.content?.trim() || "No email generated.";
 
-    // 🔧 Optional cleanup: normalize line breaks & enforce # / - prefixes
+    // 🔧 Cleanup: normalize line breaks & enforce template consistency
     email = email
       .replace(/\r\n/g, "\n")
-      .replace(/^\s*Page\/URL:/gm, "# ") // ensure headers
-      .replace(/^\s*[-•]\s*/gm, " - "); // normalize dash lists
+      .replace(/^\s*Page\/URL:?/gm, "Page/URL:") // enforce correct header
+      .replace(/^\s*[-•]\s*/gm, " - "); // normalize bullet style
 
     // Save to cache
     cache.set(notes, email);
